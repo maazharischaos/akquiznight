@@ -135,19 +135,37 @@ const CORS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS'
 };
 
-// Single entry point for ALL methods — avoids any per-method routing mismatch
-// (which was showing up as a 405). We branch on the method ourselves.
+// Single entry point for ALL methods. We never 405 — some setups redirect POST
+// to GET (trailing-slash rules), so we generate whenever a body/params are present
+// and only show the liveness message for a bare GET with no request body.
 export async function onRequest(context) {
   const method = context.request.method;
   if (method === 'OPTIONS') {
     return new Response('', { status: 204, headers: CORS });
   }
-  if (method === 'GET') {
-    // A browser visit / liveness check. 200 so the test button reads it as "reachable".
-    return new Response(JSON.stringify({ ok: true, message: 'Function live. Use POST to generate.' }), { status: 200, headers: CORS });
+
+  // Try to read a JSON body (POST) or query params (fallback if POST got downgraded).
+  let body = {};
+  let hasInput = false;
+  try {
+    const raw = await context.request.text();
+    if (raw && raw.trim()) { body = JSON.parse(raw); hasInput = true; }
+  } catch (_) {}
+  if (!hasInput) {
+    const u = new URL(context.request.url);
+    if (u.searchParams.has('count') || u.searchParams.has('topic')) {
+      body = {
+        count: u.searchParams.get('count'),
+        topic: u.searchParams.get('topic') || '',
+        categories: (u.searchParams.get('categories') || '').split(',').filter(Boolean)
+      };
+      hasInput = true;
+    }
   }
-  if (method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Use POST' }), { status: 405, headers: CORS });
+
+  // Bare GET with no input = liveness check for the test button / browser visit.
+  if (method === 'GET' && !hasInput) {
+    return new Response(JSON.stringify({ ok: true, message: 'Function live. Use POST to generate.' }), { status: 200, headers: CORS });
   }
 
   const env = context.env || {};
@@ -163,8 +181,6 @@ export async function onRequest(context) {
     }), { status: 500, headers: CORS });
   }
 
-  let body = {};
-  try { body = await context.request.json(); } catch (_) {}
   const count = Math.min(30, Math.max(1, parseInt(body.count, 10) || 20));
   const avoid = Array.isArray(body.avoid) ? body.avoid : [];
   const prompt = buildPrompt({ topic: body.topic, categories: body.categories, count, avoid });
