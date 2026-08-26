@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>AK Quiz Night</title>
 
-<!-- PWA Tags -->
+<!-- PWA Metadata & Manifest -->
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#FFC82A">
 <link rel="apple-touch-icon" href="/icon-192.png">
@@ -15,8 +15,8 @@
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js')
-        .then(reg => console.log('PWA Service Worker registered:', reg.scope))
-        .catch(err => console.error('PWA Service Worker registration failed:', err));
+        .then(reg => console.log('Service Worker Registered:', reg.scope))
+        .catch(err => console.error('Service Worker Registration Failed:', err));
     });
   }
 </script>
@@ -1206,7 +1206,7 @@ function renderMod(r){
       <div class="qbox center">
         <div class="ans-label">Room code — share this</div>
         <div style="font-size:46px;font-weight:900;letter-spacing:6px;color:var(--cerise);margin:6px 0">${r.code}</div>
-        <div class="mini" style="margin:0">${deckLen(r)} questions · ${r.timeLimit?r.timeLimit+'s timer':'no timer'}</div>
+        <div class="mini" style="margin:0">Host: <b>${esc(r.hostName||'Moderator')}</b> · ${deckLen(r)} questions · ${r.timeLimit?r.timeLimit+'s timer':'no timer'}</div>
         <div class="mini" style="margin-top:4px"><span class="srcbadge">${r.src==='ai'?'🤖 AI'+(r.topic?' · '+esc(r.topic):''):'📚 Question bank'}</span></div>
       </div>
       <div class="scores">
