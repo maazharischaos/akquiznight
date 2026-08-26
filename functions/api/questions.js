@@ -1,7 +1,7 @@
 // Cloudflare Pages Function: generates quiz questions.
 // Reachable at: /api/questions
 
-const GEMINI_MODEL = 'gemini-2.5-flash';
+const GEMINI_MODEL = 'gemini-3.6-flash';
 const OPENAI_MODEL = 'gpt-4o-mini';
 
 function buildPrompt({ topic, categories, count, avoid }) {
